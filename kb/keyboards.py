@@ -1,18 +1,9 @@
 from aiogram.types import ReplyKeyboardMarkup
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+import json
 
-functions_default = ReplyKeyboardMarkup(resize_keyboard=True)
-functions_default.row("👤 личный кабинет", "🌩 Начать атаку", "🎄 Связаться с администратором")
-functions_default.row("⚙ Прокси")
-
-proxy_choice = ReplyKeyboardMarkup(resize_keyboard=True)
-proxy_choice.row("🔅 IPV4", "🔅 HTTP/HTTPS", "🔅 SOCKS4")
-proxy_choice.row("⏮ Назад")
-
-bomb = ReplyKeyboardMarkup(resize_keyboard=True)
-bomb.row("🟢 Начать атаку", "🔴 Остановить атаку")
-bomb.row("⏮ Назад")
-
+with open("settings.json", "r", encoding="utf-8") as file:
+    settings = json.load(file)
 
 def create_pay_qiwi_func(send_requests, receipt, message_id, way):
     check_qiwi_pay_inl = InlineKeyboardMarkup()
@@ -25,15 +16,36 @@ def create_pay_qiwi_func(send_requests, receipt, message_id, way):
     )
     return check_qiwi_pay_inl
 
-
-# принятие платежа
-#
-
 oplata = InlineKeyboardMarkup()
 oplata.row(
     InlineKeyboardButton(text="💠 Оплатить доступ к боту 💠", callback_data=f"oplata")
 )
 
-proxy_inline_choice = InlineKeyboardMarkup()
-proxy_inline_choice.row(InlineKeyboardButton(text="🔹 IPV4", callback_data=f"ipv4"), InlineKeyboardButton(text="🔹 HTTP / HTTPS", callback_data=f"http"), InlineKeyboardButton(text="🔹 SOCKS4", callback_data=f"socks4"))
-proxy_inline_choice.row(InlineKeyboardButton(text="🔸 None Proxy Mode", callback_data=f"none_proxy"))
+def MAIN(user_id):
+    main_menu = InlineKeyboardMarkup()
+
+    zapusk = InlineKeyboardButton(text="🧨 Запустить", callback_data="Zapusk")
+    helpme = InlineKeyboardButton(text="❗ Помощь", callback_data="helpme")
+
+    telegram_channel = InlineKeyboardButton(text="💥 Telegram канал", url="t.me/benefixx")
+
+    my_rassilk = InlineKeyboardButton(text="📲 Мои рассылки", callback_data="my_rassilki")
+    antispam = InlineKeyboardButton(text="👑 Анти-спам", callback_data="antispam")
+
+    profile = InlineKeyboardButton(text="💼 Профиль", callback_data="profile")
+
+    tehPodderjka = InlineKeyboardButton(text="👨‍💻 Техническая поддержка", url="t.me/benefixx")
+
+    admin = InlineKeyboardButton(text="👋 Админ панель", callback_data="admin_panel")
+
+
+    main_menu.row(zapusk, profile)
+    main_menu.row(telegram_channel, helpme)
+    main_menu.row(my_rassilk, antispam)
+    main_menu.row(tehPodderjka)
+
+    if str(user_id) in settings["telegram"]["admins"]:
+        main_menu.row(admin)
+
+    return main_menu
+
