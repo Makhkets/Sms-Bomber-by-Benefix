@@ -1,8 +1,6 @@
 import asyncio
 import json
 import sqlite3
-from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-from aiogram.dispatcher.filters import Text
 from pyqiwip2p import QiwiP2P
 import requests
 from aiogram import *
@@ -31,10 +29,11 @@ dp = Dispatcher(bot, loop=loop, storage=MemoryStorage())
 
 
 class Form(StatesGroup):
+    ipv4 = State()
+    http = State()
+    socks4 = State()
 
     getPhone = State()
-
-    antispam = State()
 
 
 @dp.callback_query_handler(lambda c: c.data == "oplata")
@@ -110,7 +109,6 @@ async def process_callback_button1(call: types.CallbackQuery):
             ),
         )
 
-
 @dp.callback_query_handler(text_startswith="Pay:Form:")
 async def check_qiwi_pay(call: CallbackQuery):
     receipt = call.data[9:].split(":")[0]
@@ -145,7 +143,6 @@ async def check_qiwi_pay(call: CallbackQuery):
             await call.message.answer(
                 f"<b>✅ Вы успешно пополнили баланс на сумму {pay_amount}руб. Удачи ❤</b>\n"
                 f"<b>📃 Чек:</b> <code>+{receipt}</code>",
-                reply_markup=keyboards.functions_default,
             )
 
             use_date = datetime.datetime.now()
@@ -182,30 +179,6 @@ async def check_qiwi_pay(call: CallbackQuery):
             "⏳ Попробуйте чуть позже.",
         )
 
-
-@dp.callback_query_handler(Text(startswith="profile"))
-async def index(call: types.CallbackQuery):
-    await call.message.delete()
-    with sqlite3.connect(path_db) as db:
-        user = db.execute(
-            "SELECT * FROM users WHERE user_id = ?", (str(call.from_user.id),)
-        ).fetchall()
-
-    with sqlite3.connect(path_db) as db:
-        find_user = db.execute(
-            "SELECT * FROM users WHERE user_id = ?",
-            (str(call.from_user.id),),
-        ).fetchall()
-    check_subscribe = find_user[0][2]
-
-    await call.message.answer(
-        f"🤖 Бот для отправки огромного количества смс и звонков в развлекательных целях.\n\n☎ Доступно сервисов: <code>10</code>\n"
-        f"⌚ Подписка истекает: <code>{check_subscribe}</code>\n👤 Логин: @{call.from_user.username}\n🔑 Мой ID: {call.from_user.id}"
-        f"\n\n❔ Не знаешь с чего начать?\nПрочти раздел '❗ Помощь'",
-        reply_markup=keyboards.MAIN(call.from_user.id),
-    )
-
-
 @dp.message_handler(text="/start")
 async def send_message(message: types.Message):
     await message.answer(text="⚡")
@@ -215,6 +188,7 @@ async def send_message(message: types.Message):
             "SELECT * FROM users WHERE user_id = ?",
             (str(message.from_user.id),),
         ).fetchall()
+        logger.success(find_user)
 
         if len(find_user) <= 0:
             with sqlite3.connect(path_db) as db:
@@ -229,13 +203,14 @@ async def send_message(message: types.Message):
                     ),
                 )
 
+
         with sqlite3.connect(path_db) as db:
             find_user = db.execute(
                 "SELECT * FROM users WHERE user_id = ?",
                 (str(message.from_user.id),),
             ).fetchall()
         check_subscribe = find_user[0][2]
-
+        logger.debug(len(check_subscribe))
         if len(check_subscribe) <= 2:
             await message.answer(
                 "🛒 Оплатите доступ на месяц для работы с ботом\n\n✅Более 60 сервисов\n✅Многопоточность и Асинхронность выполнения атаки на номер\n✅ Возможность вписать свои приват прокси ЛЮБОГО вида\n✅ Анонимность, мы не храним информацию об атаках\n",
@@ -243,123 +218,215 @@ async def send_message(message: types.Message):
             )
 
         elif len(check_subscribe) > 2:
-            with sqlite3.connect(path_db) as db:
-                user = db.execute(
-                    "SELECT * FROM users WHERE user_id = ?",
-                    (str(message.from_user.id),),
-                ).fetchall()
+            await message.answer(f"💣 Приветствую вас в мощнейшем бомбере во всем рунете\n\n⌛ Ваша подписка истекает: {check_subscribe}\nСоздатель {settings['admin_nickname']}", reply_markup=keyboards.functions_default)
 
-            await message.answer(
-                f"🤖 Бот для отправки огромного количества смс и звонков в развлекательных целях.\n\n☎ Доступно сервисов: <code>10</code>\n"
-                f"⌚ Подписка истекает: <code>{check_subscribe}</code>\n👤 Логин: @{message.from_user.username}\n🔑 Мой ID: {message.from_user.id}"
-                f"\n\n❔ Не знаешь с чего начать?\nПрочти раздел '❗ Помощь'",
-                reply_markup=keyboards.MAIN(message.from_user.id),
-            )
+@dp.message_handler(text="👤 личный кабинет")
+async def send_message(message: types.Message):
+    with sqlite3.connect(path_db) as db:
+        user = db.execute("SELECT * FROM users WHERE user_id = ?", (str(message.from_user.id),)).fetchall()
 
+    text = f"""
+📱 Ваш профиль:
+〰〰〰〰〰〰〰〰〰
+🔑 Мой ID: {message.from_user.id}
+👤 Логин: @{message.from_user.username}
+〰〰〰〰〰〰〰〰〰
+⌛ Подписка длиться до: {user[0][2]}
+    """
 
-@dp.callback_query_handler(Text(startswith="antispam"))
-async def send_message(call: types.CallbackQuery, state: FSMContext):
-    await call.message.edit_text(
-        "<b>Введите ваш номер телефона</b>\n\n<code>Без +\nПример: 79999999999</code>"
-    )
-    await Form.antispam.set()
+    await message.answer(text)
 
+@dp.message_handler(text="🎄 Связаться с администратором")
+async def send_message(message: types.Message):
+    await message.answer(f"🔥 Актуальные контакаты администратора: {settings['admin_nickname']}")
 
-@dp.message_handler(state=Form.antispam)
-async def send_message(message: types.Message, state: FSMContext):
-
-    phone = message.text
+@dp.message_handler(text="⚙ Прокси")
+async def send_message(message: types.Message):
+    await message.delete()
+    await message.answer("❓ Выберите какие прокси вы хотите загрузить", reply_markup=keyboards.proxy_choice)
 
     with sqlite3.connect(path_db) as db:
-        db.execute(
-            "INSERT INTO whitelist(user_id, username, phone) VALUES (?,?,?)",
-            (message.from_user.id, message.from_user.username, phone),
-        )
+        user = db.execute("SELECT * FROM users WHERE user_id = ?", (str(message.from_user.id),)).fetchall()
+    proxy = user[0][4]
 
+    await message.answer(f"💎 Сейчас используется этот вид прокси: <b>{proxy}</b>", reply_markup=keyboards.proxy_inline_choice)
+
+@dp.message_handler(text="⏮ Назад", state="*")
+async def send_message(message: types.Message, state: FSMContext):
+    await state.finish()
     await message.delete()
-    await message.answer(
-        "Успешно занес ваш номер в <b>WHITELIST</b>",
-        reply_markup=keyboards.MAIN(message.from_user.id),
-    )
+    await message.answer("Переместил вас в главное меню", reply_markup=keyboards.functions_default)
 
+@dp.callback_query_handler(lambda c: c.data == "ipv4")
+async def process_callback_button1(call: types.CallbackQuery):
+    await call.message.delete()
+    with sqlite3.connect(path_db) as db:
+        db.execute("UPDATE users SET proxy = ? WHERE user_id = ?", ("ipv4", str(call.from_user.id),))
+
+
+    with sqlite3.connect(path_db) as db:
+        user = db.execute("SELECT * FROM users WHERE user_id = ?", (str(call.from_user.id),)).fetchall()
+    proxy = user[0][4]
+    await call.message.answer(f"💎 Сейчас используется этот вид прокси: <b>{proxy}</b>", reply_markup=keyboards.proxy_inline_choice)
+
+@dp.callback_query_handler(lambda c: c.data == "http")
+async def process_callback_button1(call: types.CallbackQuery):
+    await call.message.delete()
+    with sqlite3.connect(path_db) as db:
+        db.execute("UPDATE users SET proxy = ? WHERE user_id = ?", ("http", str(call.from_user.id),))
+
+    with sqlite3.connect(path_db) as db:
+        user = db.execute("SELECT * FROM users WHERE user_id = ?", (str(call.from_user.id),)).fetchall()
+    proxy = user[0][4]
+    await call.message.answer(f"💎 Сейчас используется этот вид прокси: <b>{proxy}</b>", reply_markup=keyboards.proxy_inline_choice)
+
+@dp.callback_query_handler(lambda c: c.data == "socks4")
+async def process_callback_button1(call: types.CallbackQuery):
+    await call.message.delete()
+    with sqlite3.connect(path_db) as db:
+        db.execute("UPDATE users SET proxy = ? WHERE user_id = ?", ("socks4", str(call.from_user.id),))
+
+    with sqlite3.connect(path_db) as db:
+        user = db.execute("SELECT * FROM users WHERE user_id = ?", (str(call.from_user.id),)).fetchall()
+    proxy = user[0][4]
+    await call.message.answer(f"💎 Сейчас используется этот вид прокси: <b>{proxy}</b>", reply_markup=keyboards.proxy_inline_choice)
+
+@dp.callback_query_handler(lambda c: c.data == "none_proxy")
+async def process_callback_button1(call: types.CallbackQuery):
+    await call.message.delete()
+    with sqlite3.connect(path_db) as db:
+        db.execute("UPDATE users SET proxy = ? WHERE user_id = ?", ("none_proxy", str(call.from_user.id),))
+
+    with sqlite3.connect(path_db) as db:
+        user = db.execute("SELECT * FROM users WHERE user_id = ?", (str(call.from_user.id),)).fetchall()
+    proxy = user[0][4]
+    await call.message.answer(f"💎 Сейчас используется этот вид прокси: <b>{proxy}</b>", reply_markup=keyboards.proxy_inline_choice)
+
+# 🔅 IPV4
+@dp.message_handler(text="🔅 IPV4")
+async def send_message(message: types.Message):
+    await Form.ipv4.set()
+    await message.answer("❗ Введите прокси в таком виде:\n\n<code>1.0.1.0:6000\n1.0.1.0:6000\n1.0.1.0:6000</code>")
+
+
+@dp.message_handler(state=Form.ipv4)
+async def send_message(message: types.Message, state: FSMContext):
+    proxies = message.text
+    if len(proxies) > 5:
+        with sqlite3.connect(path_db) as db:
+            db.execute("UPDATE users SET ipv4_proxies = ? WHERE user_id = ?", (proxies, str(message.from_user.id)),)
+    else:
+        await message.answer("Вводите прокси!")
+
+    await message.answer("⚜ Успешно обновил список прокси")
     await state.finish()
 
-
-@dp.callback_query_handler(Text(startswith="helpme"))
-async def send_message(call: types.CallbackQuery):
-    await call.answer(
-        f"🔥 Актуальные контакаты администратора: {settings['admin_nickname']}"
-    )
-    await call.message.answer(
-        f"🔥 Актуальные контакаты администратора: {settings['admin_nickname']}"
-    )
+@dp.message_handler(text="🔅 HTTP/HTTPS", state="*")
+async def send_message(message: types.Message, state: FSMContext):
+    await Form.http.set()
+    await message.answer("❗ Введите прокси в таком виде:\n\n<code>1.0.1.0:6000\n1.0.1.0:6000\n1.0.1.0:6000</code>")
 
 
-@dp.callback_query_handler(Text(startswith="Zapusk"))
-async def send_message(call: types.CallbackQuery, state: FSMContext):
+@dp.message_handler(state=Form.http)
+async def send_message(message: types.Message, state: FSMContext):
+    proxies = message.text
+    if len(proxies) > 5:
+        with sqlite3.connect(path_db) as db:
+            db.execute("UPDATE users SET http_proxies = ? WHERE user_id = ?", (proxies, str(message.from_user.id)),)
+    else:
+        await message.answer("Вводите прокси!")
+
+    await message.answer("⚜ Успешно обновил список прокси")
     await state.finish()
-    await call.message.answer(
-        "‼ Введите номер без +\nПример:\n<code>78255125961\n78252225261\n78555225961</code>"
-    )
+
+@dp.message_handler(text="🔅 SOCKS4", state="*")
+async def send_message(message: types.Message, state: FSMContext):
+    await Form.socks4.set()
+    await message.answer("❗ Введите прокси в таком виде:\n\n<code>1.0.1.0:6000\n1.0.1.0:6000\n1.0.1.0:6000</code>")
+
+
+@dp.message_handler(state=Form.socks4)
+async def send_message(message: types.Message, state: FSMContext):
+    proxies = message.text
+    if len(proxies) > 5:
+        with sqlite3.connect(path_db) as db:
+            db.execute("UPDATE users SET socks4_proxies = ? WHERE user_id = ?", (proxies, str(message.from_user.id)),)
+    else:
+        await message.answer("Вводите прокси!")
+
+    await message.answer("⚜ Успешно обновил список прокси")
+    await state.finish()
+
+# 🌩 Начать атаку
+@dp.message_handler(text="🌩 Начать атаку", state="*")
+async def send_message(message: types.Message, state: FSMContext):
+    await state.finish()
+    await  message.answer("Выберите пункт", reply_markup=keyboards.bomb)
+
+
+@dp.message_handler(text="🟢 Начать атаку", state="*")
+async def send_message(message: types.Message, state: FSMContext):
+    await state.finish()
+    await message.answer("‼ Введите номер без +\nПример:\n<code>78255125961\n78252225261\n78555225961</code>")
     await Form.getPhone.set()
 
 
 @dp.message_handler(state=Form.getPhone)
 async def send_message(message: types.Message, state: FSMContext):
-
     phone = message.text
-
     with sqlite3.connect(path_db) as db:
-        tasks = db.execute(
-            "SELECT * FROM tasks WHERE user_id = ?", (message.from_user.id,)
-        ).fetchall()
+        user = db.execute("""SELECT * FROM tasks WHERE user_id = ? AND isStart = ?""", (str(message.from_user.id), "True",)).fetchall()
 
-
-        if len(tasks) >= 3:
-            await message.answer(
-                "❌ Вы не можете запустить спам на 4 номера, завершите 1 из номеров из вашего списка"
-            )
-
+    try:
+        if len(user[0]) > 3:
+            await message.answer("У вас уже есть запущенный спам на номер!")
+            await state.finish()
         else:
-            db.execute(
-                "INSERT INTO tasks(username, user_id, timer, active, phone) VALUES (?,?,?,?,?)",
-                (message.from_user.username, message.from_user.id, 3600, "True", phone),
-            )
+            if phone.isdigit():
+                phone = phone.replace("+", "")
+                await message.answer(f"🔥 Запускаю спам на номер <code>{phone}</code>")
+                use_date = datetime.datetime.now()
+                use_date = str(use_date + relativedelta(hours=+1)).split(".")[0].split()[1].split(":")
+                timer = use_date[0] + use_date[1]
+                with sqlite3.connect(path_db) as db:
+                    db.execute("""INSERT INTO tasks
+                                      (phone, timestop, isStart, username, user_id)
+                                      VALUES (?, ?, ?, ?, ?);""", (phone, timer, "True", message.from_user.username, str(message.from_user.id),)) # True , надо включить
+                await state.finish()
+            else:
+                await message.answer("Вы ввели не номер!")
+                await state.finish()
+    except IndexError:
+        if phone.isdigit():
+            phone = phone.replace("+", "")
+            await message.answer(f"🔥 Запускаю спам на номер <code>{phone}</code>")
+            use_date = datetime.datetime.now()
+            use_date = str(use_date + relativedelta(hours=+1)).split(".")[0].split()[1].split(":")
+            timer = use_date[0] + use_date[1]
+            with sqlite3.connect(path_db) as db:
+                db.execute("""INSERT INTO tasks
+                                  (phone, timestop, isStart, username, user_id)
+                                  VALUES (?, ?, ?, ?, ?);""", (phone, timer, "True", message.from_user.username,
+                                                               str(message.from_user.id),))  # True , надо включить
+            await state.finish()
+        else:
+            await message.answer("Введите номер!")
 
-            await message.answer(
-                f"✅ Успешно запустил бомбер на номер: <code>{phone}</code>\n✅ Бот выключит спам через 3600 секунд (1 час)"
-            )
 
-        await state.finish()
-
-
-@dp.callback_query_handler(Text(startswith="my_rassilki"))
-async def send_message(call: types.CallbackQuery, state: FSMContext):
-
+@dp.message_handler(text="🔴 Остановить атаку", state="*")
+async def send_message(message: types.Message, state: FSMContext):
+    await state.finish()
     with sqlite3.connect(path_db) as db:
-        tasks = db.execute(
-            "SELECT * FROM tasks WHERE user_id = ? AND active = ?",
-            (call.from_user.id, "False"),
-        ).fetchall()
+        find_task = db.execute("SELECT * FROM tasks WHERE user_id = ? AND isStart = ?", (str(message.from_user.id), "True",)).fetchall()
 
-    generate = InlineKeyboardMarkup()
-
-
-    for task in tasks:
-        generate.row(InlineKeyboardButton(text=f"ID: {task[0]} | PHONE: {task[5]}", callback_data=f"attack:{task[0]}"))
-
-    await call.message.answer("✅ Активные атаки:", reply_markup=generate)
+    if len(find_task) >= 1:
+        with sqlite3.connect(path_db) as db:
+             db.execute("UPDATE tasks SET isStart = ? WHERE user_id = ?", ("False", str(message.from_user.id),))
+        await message.answer(f"Успешно остановил атаку на номер: <code>{find_task[0][0]}</code>")
+    else:
+        await message.answer("У вас нет активных атак 😪")
 
 
-@dp.callback_query_handler(Text(startswith="attack"), state="*")
-async def send_message(call: types.CallbackQuery, state: FSMContext):
-    ID = call.data.split(":")[1]
-
-    with sqlite3.connect(path_db) as db:
-        db.execute("DELETE FROM tasks WHERE ID = ?", (ID,))
-
-    await call.message.answer(f"✅ Успешно остановил спам на номер, ID операции: <b>{ID}</b>")
 
 if __name__ == "__main__":
     executor.start_polling(dp)
-
