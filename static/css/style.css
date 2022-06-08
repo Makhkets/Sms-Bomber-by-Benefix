@@ -1,0 +1,104 @@
+* {
+    margin: 0;
+    padding: 0;
+  }
+  
+  header {
+    background-image: url(../img/background.jpg);
+    height: 100vh;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-attachment: fixed;
+    background-size: cover;
+  }
+  
+  .header {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  
+  .container {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    align-items: center;
+  }
+  .container .header__logo {
+    margin-top: 30px;
+  }
+  .container .header__logo h2 {
+    margin-left: 13px;
+  }
+  .container .header__logo a {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    text-decoration: none;
+    color: white;
+    font-size: 25px;
+    font-family: 'Raleway Dots', cursive;
+    margin-left: 7px;
+  }
+  .container .nav {
+    margin-top: 30px;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+  }
+  .container .nav ul {
+    display: flex;
+    flex-direction: row;
+    list-style-type: none;
+    color: white;
+  }
+  .container .nav li {
+    margin-right: 20px;
+    font-family: 'Montserrat', sans-serif;
+  }
+  .container .nav a {
+    text-decoration: none;
+    color: white;
+  }
+  .container .nav .header__nav__logo img {
+    margin-left: 20px;
+  }
+  
+  .main {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 35vh;
+  }
+  .main h2 {
+    margin-bottom: 5px;
+    color: white;
+    font-family: 'Raleway', sans-serif;
+  }
+  .main h1 {
+    color: white;
+    font-size: 50px;
+    margin-bottom: 8px;
+    font-family: 'Raleway', sans-serif;
+  }
+  .main p {
+    color: white;
+    font-family: 'Montserrat', sans-serif;
+    margin-bottom: 35px;
+    text-align: center;
+  }
+  .main button {
+    background-color: #998675;
+    color: white;
+    width: 170px;
+    height: 53px;
+    font-weight: 800;
+    font-family: 'Raleway', sans-serif;
+    border-color: #998675;
+    border-radius: 3px;
+    box-shadow: inset 0 -3px 0 #736357;
+    cursor: pointer;
+  }
+  
+  /*# sourceMappingURL=style.css.map */

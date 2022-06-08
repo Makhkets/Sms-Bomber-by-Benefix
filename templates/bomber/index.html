@@ -1,0 +1,80 @@
+
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Raleway+Dots&display=swap" rel="stylesheet">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@200&display=swap" rel="stylesheet">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+
+    <title>BENEFIX</title>
+</head>
+
+<body>
+    <header>
+        <div class="header">
+            <div class="container">
+
+                <div class="header__logo">
+
+                    <a href="#">
+                        <img src="{% static 'img/logos.png' %}" alt="">
+                        <h2>Benefix</h2>
+                    </a>
+                </div>
+
+                <div class="nav">
+                    <div class="header__nav">
+                        <nav>
+                            <ul>
+                                <a href="{% url 'bomber_url' %}">
+                                    <li class="header__li">Home</li>
+                                </a>
+                                <a href="{% url 'panel_url' %}">
+                                    <li class="header__li">Panel</li>
+                                </a>
+                                <a href="{% url 'bomber_login2_url' %}">
+                                    <li class="header__li">Login</li>
+                                </a>
+                                <a href="{% url 'bomber_login_url' %}">
+                                    <li class="header__li">Register</li>
+                                </a>
+                            </ul>
+                        </nav>
+                    </div>
+
+                    <!-- <div class="header__nav__logo">
+                        <img src="img/icons/icon-cart.png" alt="">
+                        <img src="img/icons/icon-search.png" alt="">
+                    </div> -->
+
+
+                </div>
+
+            </div>
+
+            <div class="main">
+                <h2>Лучшие на рынке</h2>
+                <h1>BNF (BOMBER) BEST SOFTWARE</h1>
+                <p>Наш сервис позволит вам заспамит телефон недруга</p>
+                <button>BUY</button>
+            </div>
+        </div>
+    </header>
+</body>
+</html>
