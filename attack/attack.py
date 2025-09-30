@@ -254,7 +254,7 @@ class Bomber:
         except Exception as ex: print(ex)
 
 
-# bomber = Bomber("79388954250", 500, 555).launch()
+# bomber = Bomber("79382342424", 500, 555).launch()
 # set active 0
 # Поставить актив 0
 
